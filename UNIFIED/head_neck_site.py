@@ -223,9 +223,23 @@ def analyze_uploaded(
         elif is_tv:
             value=r.get('V100Rx_%',math.nan); value_text=f"{float(value):.1f}%" if pd.notna(value) else 'Not available'; metric='Target Coverage / Dose Quality'
         else:
-            for col,label,unit in (("D0.03cc_Gy","D0.03cc"," Gy"),("Dmean_Gy","Mean"," Gy"),("V30Gy_%","V30Gy","%"),("D5_Gy","D5%"," Gy")):
-                if pd.notna(r.get(col)) and col in str(r.get('notes','')):
-                    value=r.get(col); value_text=f"{float(value):.2f}{unit}"; metric=label; break
+            notes_lower = str(r.get("notes", "")).lower()
+            candidates = (
+                ("D0.03cc_Gy", "D0.03cc", " Gy", "d0.03cc"),
+                ("Dmean_Gy", "Mean", " Gy", "mean"),
+                ("V30Gy_%", "V30Gy", "%", "v30gy"),
+                ("D5_Gy", "D5%", " Gy", "d5%"),
+            )
+            for col, label, unit, note_token in candidates:
+                candidate = pd.to_numeric(pd.Series([r.get(col)]), errors="coerce").iloc[0]
+                if pd.notna(candidate) and note_token in notes_lower:
+                    value = float(candidate)
+                    value_text = f"{value:.2f}{unit}"
+                    metric = label
+                    break
+            # Never display "Not scored" when a finite score exists.
+            if pd.notna(score) and value_text == "Not scored":
+                value_text = "Scored"
         grp=oar_group(str(r.get('structure',''))) if not is_tv else None
         rows.append({"structure":r.get('structure'),"metric":metric,"value":value,"value_text":value_text,"goal":goal,
                      "score":float(score) if pd.notna(score) else math.nan,"domain":category,"category":"TV" if is_tv else "OAR",
@@ -243,7 +257,7 @@ def analyze_uploaded(
         d2_value = raw.get("D2_Gy")
         d50_value = raw.get("D50_Gy")
         d98_value = raw.get("D98_Gy")
-        rows.append({
+        hi_rows.append({
             "structure": structure_name,
             "metric": HI_DISPLAY_NAME,
             "value": evaluation.value if evaluation.value is not None else math.nan,
@@ -266,6 +280,9 @@ def analyze_uploaded(
             rows.append({"structure":f"PTV_eval ({rx:g} Gy)","metric":"V105%","value":math.nan,"value_text":"Missing eval structure",
                          "goal":"≤5% ideal; ≤10% acceptable","score":math.nan,"domain":"PTV_eval Hotspot Review","category":"TV","missing_eval":True})
             missing.append(f"{rx:g} Gy eval target missing for {', '.join(targets)}")
+
+    # Place HI rows together at the end of the clinical metrics, immediately before MUF.
+    rows.extend(hi_rows)
 
     muf=modulation_factor(files.plan,highest_rx)
     ms=muf_score(muf['muf'])

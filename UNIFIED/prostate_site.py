@@ -114,6 +114,7 @@ def analyze_uploaded(
     standards = CONFIG["standard_prescriptions_gy"]
 
     rows: list[dict[str, Any]] = []
+    hi_rows: list[dict[str, Any]] = []
     domain_scores: dict[str, list[float]] = {
         "Target Coverage": [],
         "Target Dose Quality": [],
@@ -296,7 +297,7 @@ def analyze_uploaded(
 
                 if should_score_target_homogeneity(name, rx, highest_target_rx):
                     hi_evaluation = score_homogeneity_index(hi)
-                    rows.append(
+                    hi_rows.append(
                         {
                             "structure": name,
                             "metric": HI_DISPLAY_NAME,
@@ -422,6 +423,9 @@ def analyze_uploaded(
         missing_eval_details.append(
             f"{rx_key:g} Gy eval target missing for {target_list}"
         )
+
+    # Place HI rows together at the end of the clinical metrics, immediately before MUF.
+    rows.extend(hi_rows)
 
     fallback_rx = max(detected_target_rxs) if detected_target_rxs else None
     muf = modulation_factor(files.plan, fallback_rx)
