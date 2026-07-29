@@ -211,6 +211,7 @@ def analyze_uploaded(
     raw_df=pd.DataFrame(raw_rows)
     metric_df=build_metric_table(raw_df,rx_dose_gy=highest_rx)
     rows=[]
+    hi_rows: list[dict[str, Any]] = []
     for _,r in metric_df.iterrows():
         score=pd.to_numeric(pd.Series([r.get('score')]),errors='coerce').iloc[0]
         category=str(r.get('category','Not scored'))
