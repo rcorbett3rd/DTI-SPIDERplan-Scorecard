@@ -1,0 +1,35 @@
+{
+  "prototype_note": "Initial SPIDERplan prototype scoring rules. Validate and tune by disease site before clinical use.",
+  "target_keywords": [
+    "PTV",
+    "CTV",
+    "GTV"
+  ],
+  "serial_oar_keywords": [
+    "Cord",
+    "SpinalCord",
+    "Brainstem",
+    "Chiasm",
+    "Optic"
+  ],
+  "priority_oars": [
+    "SpinalCord",
+    "Brainstem",
+    "OpticChiasm",
+    "OpticNrv",
+    "Parotid",
+    "Mandible",
+    "Larynx",
+    "Esophagus",
+    "Heart",
+    "Lung",
+    "Bowel",
+    "Bladder",
+    "Rectum"
+  ],
+  "domain_weights": {
+    "Target Coverage / Hotspot": 0.5,
+    "Serial Neurologic OAR": 0.3,
+    "General OAR / Other": 0.2
+  }
+}

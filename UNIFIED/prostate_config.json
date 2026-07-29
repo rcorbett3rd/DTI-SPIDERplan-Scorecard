@@ -1,0 +1,104 @@
+{
+  "site": "Prostate (+/-LN)",
+  "standard_prescriptions_gy": {
+    "high": 79.2,
+    "mid": 59.4,
+    "low": 45.0
+  },
+  "target_defaults": {
+    "preferred_v100_percent": 98.0,
+    "minimum_acceptable_v100_percent": 95.0,
+    "minimum_d003_percent_rx": 93.0,
+    "preferred_d003_min_percent_rx": 95.0,
+    "hotspot_preferred_percent_rx": 107.0,
+    "hotspot_maximum_percent_rx": 110.0,
+    "v105_ideal_percent": 5.0,
+    "v105_acceptable_percent": 10.0
+  },
+  "muf": {
+    "preferred_max": 3.0,
+    "good_max": 4.0,
+    "absolute_max": 5.0
+  },
+  "oars": {
+    "Rectum": {
+      "aliases": ["rectum", "rect"],
+      "metrics": [
+        {"type": "Vx_pct", "dose_gy": 30, "limit": 80},
+        {"type": "Vx_pct", "dose_gy": 40, "limit": 65},
+        {"type": "Vx_pct", "dose_gy": 50, "limit": 50},
+        {"type": "Vx_pct", "dose_gy": 65, "limit": 30},
+        {"type": "Vx_pct", "dose_gy": 75, "limit": 15},
+        {"type": "Vx_pct", "dose_gy": 77, "limit": 5}
+      ]
+    },
+    "Bladder": {
+      "aliases": ["bladder", "bladr"],
+      "metrics": [
+        {"type": "Vx_pct", "dose_gy": 40, "limit": 70},
+        {"type": "Vx_pct", "dose_gy": 65, "limit": 50},
+        {"type": "Vx_pct", "dose_gy": 70, "limit": 35},
+        {"type": "Vx_pct", "dose_gy": 75, "limit": 25},
+        {"type": "Vx_pct", "dose_gy": 80, "limit": 15}
+      ]
+    },
+    "Bowel Bag": {
+      "aliases": ["bag_bowel", "bowelbag", "bowel_bag", "bowel bag"],
+      "metrics": [
+        {"type": "Vx_cc", "dose_gy": 55, "limit": 1},
+        {"type": "Vx_cc", "dose_gy": 50, "limit": 5},
+        {"type": "Vx_pct", "dose_gy": 50, "limit": 10},
+        {"type": "Vx_cc", "dose_gy": 45, "limit": 195},
+        {"type": "Vx_cc", "dose_gy": 30, "limit": 350}
+      ]
+    },
+    "Colon Sigmoid": {
+      "aliases": ["colon_sigmoid", "sigmoid", "colon sigmoid"],
+      "metrics": [
+        {"type": "D003cc", "limit": 60},
+        {"type": "Vx_cc", "dose_gy": 50, "limit": 5}
+      ]
+    },
+    "Femoral Head L": {
+      "aliases": ["femur_head_l", "femoral_head_l", "femur l", "fem head l"],
+      "metrics": [
+        {"type": "Vx_pct", "dose_gy": 50, "limit": 5},
+        {"type": "Vx_pct", "dose_gy": 40, "limit": 40}
+      ]
+    },
+    "Femoral Head R": {
+      "aliases": ["femur_head_r", "femoral_head_r", "femur r", "fem head r"],
+      "metrics": [
+        {"type": "Vx_pct", "dose_gy": 50, "limit": 5},
+        {"type": "Vx_pct", "dose_gy": 40, "limit": 40}
+      ]
+    },
+    "Penile Bulb": {
+      "aliases": ["penilebulb", "penile_bulb", "penile bulb"],
+      "metrics": [
+        {"type": "Mean", "limit": 52.5},
+        {"type": "Vx_pct", "dose_gy": 50, "limit": 50}
+      ]
+    },
+    "Kidneys": {
+      "aliases": ["kidneys", "kidney_total", "kidney combined"],
+      "metrics": [
+        {"type": "Mean", "limit": 10},
+        {"type": "Vx_pct", "dose_gy": 18, "limit": 33},
+        {"type": "Vx_pct", "dose_gy": 8, "limit": 50}
+      ]
+    },
+    "Cauda Equina": {
+      "aliases": ["caudaequina", "cauda_equina", "cauda equina"],
+      "metrics": [
+        {"type": "D003cc", "limit": 45}
+      ]
+    },
+    "Skin": {
+      "aliases": ["skin"],
+      "metrics": [
+        {"type": "D01cc", "limit": 30}
+      ]
+    }
+  }
+}

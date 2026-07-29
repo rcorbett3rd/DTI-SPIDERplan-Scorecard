@@ -1,0 +1,10 @@
+streamlit>=1.38,<2
+pydicom>=2.4.4,<3
+numpy>=1.26,<2
+pandas>=2.2,<3
+plotly>=5.24,<7
+matplotlib>=3.9,<4
+scipy>=1.11,<2
+Pillow>=10.4,<12
+reportlab>=4.2,<5
+dicompyler-core==0.5.6
