@@ -214,6 +214,15 @@ def dose_at_volume_cc(dvh, volume_cc: float) -> float:
     )
 
 
+def dose_at_volume_percent(dvh, volume_percent: float) -> float:
+    """Return dose in Gy received by the specified percentage of structure volume."""
+    _, _, total_volume = dvh_arrays(dvh)
+    if not math.isfinite(total_volume) or total_volume <= 0:
+        return math.nan
+    bounded_percent = max(0.0, min(float(volume_percent), 100.0))
+    return dose_at_volume_cc(dvh, total_volume * bounded_percent / 100.0)
+
+
 def mean_dose(dvh) -> float:
     try:
         return _dose_value_gy(float(dvh.mean), dvh)

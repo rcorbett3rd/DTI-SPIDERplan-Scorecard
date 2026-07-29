@@ -18,6 +18,14 @@ from .metric_engine import (
     score_target_coverage,
     score_target_minimum,
     score_v105,
+    score_homogeneity_index,
+)
+from .homogeneity import (
+    HI_DISPLAY_NAME,
+    HI_GOAL,
+    HI_TOOLTIP,
+    homogeneity_index,
+    should_score_target_homogeneity,
 )
 from .prescription_engine import (
     assign_target_prescriptions,
@@ -112,6 +120,35 @@ def evaluate_case(
                 domain_scores.setdefault("Target Dose Quality", []).append(
                     evaluation.score
                 )
+                if should_score_target_homogeneity(
+                    structure_name, assigned_rx, highest_rx, eval_suffix=profile.eval_suffix
+                ):
+                    hi_value = values.get("Homogeneity_Index_ICRU")
+                    if hi_value is None:
+                        hi_value = homogeneity_index(
+                            values.get("D2_Gy"), values.get("D50_Gy"), values.get("D98_Gy")
+                        )
+                    hi_evaluation = score_homogeneity_index(hi_value)
+                    rows.append(
+                        _metric_row(
+                            structure=structure_name,
+                            metric=HI_DISPLAY_NAME,
+                            value=hi_evaluation.value,
+                            goal=HI_GOAL,
+                            score=hi_evaluation.score,
+                            domain="Target Dose Quality",
+                            category="TV",
+                            status=hi_evaluation.status,
+                            note=f"{HI_TOOLTIP} {hi_evaluation.note}",
+                            assigned_rx_gy=assigned_rx,
+                            D2_Gy=values.get("D2_Gy"),
+                            D50_Gy=values.get("D50_Gy"),
+                            D98_Gy=values.get("D98_Gy"),
+                        )
+                    )
+                    domain_scores.setdefault("Target Dose Quality", []).append(
+                        hi_evaluation.score
+                    )
                 continue
 
             coverage = score_target_coverage(
@@ -159,6 +196,35 @@ def evaluate_case(
                     domain_scores.setdefault("Target Dose Quality", []).append(
                         hotspot.score
                     )
+                    if should_score_target_homogeneity(
+                        structure_name, assigned_rx, highest_rx, eval_suffix=profile.eval_suffix
+                    ):
+                        hi_value = values.get("Homogeneity_Index_ICRU")
+                        if hi_value is None:
+                            hi_value = homogeneity_index(
+                                values.get("D2_Gy"), values.get("D50_Gy"), values.get("D98_Gy")
+                            )
+                        hi_evaluation = score_homogeneity_index(hi_value)
+                        rows.append(
+                            _metric_row(
+                                structure=structure_name,
+                                metric=HI_DISPLAY_NAME,
+                                value=hi_evaluation.value,
+                                goal=HI_GOAL,
+                                score=hi_evaluation.score,
+                                domain="Target Dose Quality",
+                                category="TV",
+                                status=hi_evaluation.status,
+                                note=f"{HI_TOOLTIP} {hi_evaluation.note}",
+                                assigned_rx_gy=assigned_rx,
+                                D2_Gy=values.get("D2_Gy"),
+                                D50_Gy=values.get("D50_Gy"),
+                                D98_Gy=values.get("D98_Gy"),
+                            )
+                        )
+                        domain_scores.setdefault("Target Dose Quality", []).append(
+                            hi_evaluation.score
+                        )
                 else:
                     expected_eval = any(
                         site.is_eval_target(other_name)

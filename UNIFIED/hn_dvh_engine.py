@@ -509,7 +509,13 @@ def calculate_dvh_metrics(
             dmin = float(np.min(vals))
             d95 = float(np.percentile(vals, 5))
             d98 = float(np.percentile(vals, 2))
+            d50 = float(np.percentile(vals, 50))
             d2 = float(np.percentile(vals, 98))
+            homogeneity_index = (
+                max(0.0, (d2 - d98) / d50)
+                if np.isfinite(d50) and d50 > 0
+                else float("nan")
+            )
             d5 = float(np.percentile(vals, 95))
             sorted_desc = np.sort(vals)[::-1]
             voxels_003cc = max(int(np.ceil(0.03 / voxel_volume_cc)), 1) if voxel_volume_cc > 0 else 1
@@ -526,6 +532,8 @@ def calculate_dvh_metrics(
                 "Dmax_Gy": round(dmax, 3),
                 "D0.03cc_Gy": round(d003cc, 3),
                 "D98_Gy": round(d98, 3),
+                "D50_Gy": round(d50, 3),
+                "Homogeneity_Index_ICRU": round(homogeneity_index, 4),
                 "D95_Gy": round(d95, 3),
                 "D5_Gy": round(d5, 3),
                 "D2_Gy": round(d2, 3),
@@ -538,6 +546,8 @@ def calculate_dvh_metrics(
                 row["V100Rx_%"] = round(float(np.mean(vals >= 1.00 * assigned_rx) * 100), 1)
                 row["D0.03cc_%Rx"] = round(d003cc / assigned_rx * 100, 1)
                 row["D2_%Rx"] = round(d2 / assigned_rx * 100, 1)
+                row["D50_%Rx"] = round(d50 / assigned_rx * 100, 1)
+                row["D98_%Rx"] = round(d98 / assigned_rx * 100, 1)
                 row["V95Rx_%"] = round(float(np.mean(vals >= 0.95 * assigned_rx) * 100), 1)
                 row["V105Rx_%"] = round(float(np.mean(vals >= 1.05 * assigned_rx) * 100), 1)
             else:

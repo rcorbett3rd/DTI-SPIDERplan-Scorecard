@@ -44,6 +44,15 @@ from prostate_scoring_engine import (
 ROOT = Path(__file__).parent
 CONFIG = json.loads((ROOT / "hn_scoring_config.json").read_text(encoding="utf-8"))
 from hn_scorecard_engine import build_metric_table, final_grade as hn_final_grade, OAR_RULES
+from core.homogeneity import (
+    HI_DISPLAY_NAME,
+    HI_GOAL,
+    HI_TOOLTIP,
+    format_homogeneity_details,
+    homogeneity_index,
+    score_homogeneity_index,
+    should_score_target_homogeneity,
+)
 
 
 def _csv_bytes(df: pd.DataFrame) -> bytes:
@@ -180,19 +189,21 @@ def analyze_uploaded(
         d003=dose_at_volume_cc(dvh,min(.03,total)) if total>0 else math.nan
         d95=dose_at_volume_cc(dvh,.95*total) if total>0 else math.nan
         d98=dose_at_volume_cc(dvh,.98*total) if total>0 else math.nan
+        d50=dose_at_volume_cc(dvh,.50*total) if total>0 else math.nan
         d5=dose_at_volume_cc(dvh,.05*total) if total>0 else math.nan
         d2=dose_at_volume_cc(dvh,.02*total) if total>0 else math.nan
+        hi=homogeneity_index(d2,d50,d98)
         dmin=dose_at_volume_cc(dvh,.999*total) if total>0 else math.nan
         row={
             "structure":name,"status":"Calculated","approx_volume_cc":round(float(total),2),
             "Dmin_Gy":dmin,"Dmean_Gy":mean_dose(dvh),"Dmax_Gy":float(doses[-1]) if doses.size else math.nan,
-            "D0.03cc_Gy":d003,"D98_Gy":d98,"D95_Gy":d95,"D5_Gy":d5,"D2_Gy":d2,
+            "D0.03cc_Gy":d003,"D98_Gy":d98,"D50_Gy":d50,"Homogeneity_Index_ICRU":hi,"D95_Gy":d95,"D5_Gy":d5,"D2_Gy":d2,
             "V30Gy_%":volume_at_dose(dvh,30.0,True),"assigned_rx_gy":rx if rx is not None else math.nan,
         }
         if rx is not None and rx>0:
             row.update({
                 "D95_%Rx":100*d95/rx,"Dmin_%Rx":100*dmin/rx,"V100Rx_%":volume_at_dose(dvh,rx,True),
-                "D0.03cc_%Rx":100*d003/rx,"D2_%Rx":100*d2/rx,"V95Rx_%":volume_at_dose(dvh,.95*rx,True),
+                "D0.03cc_%Rx":100*d003/rx,"D2_%Rx":100*d2/rx,"D50_%Rx":100*d50/rx,"D98_%Rx":100*d98/rx,"V95Rx_%":volume_at_dose(dvh,.95*rx,True),
                 "V105Rx_%":volume_at_dose(dvh,1.05*rx,True),
             })
         raw_rows.append(row)
@@ -219,6 +230,35 @@ def analyze_uploaded(
         rows.append({"structure":r.get('structure'),"metric":metric,"value":value,"value_text":value_text,"goal":goal,
                      "score":float(score) if pd.notna(score) else math.nan,"domain":category,"category":"TV" if is_tv else "OAR",
                      "oar_group":grp,"missing_eval":False})
+
+    # Add one independently scored ICRU HI row per eligible target.
+    # Highest-dose PTV is evaluated directly; lower-dose levels use matching PTV_eval.
+    for raw in raw_rows:
+        structure_name = str(raw.get("structure", ""))
+        assigned = raw.get("assigned_rx_gy")
+        if not should_score_target_homogeneity(structure_name, assigned, highest_rx):
+            continue
+        hi_value = raw.get("Homogeneity_Index_ICRU")
+        evaluation = score_homogeneity_index(hi_value)
+        d2_value = raw.get("D2_Gy")
+        d50_value = raw.get("D50_Gy")
+        d98_value = raw.get("D98_Gy")
+        rows.append({
+            "structure": structure_name,
+            "metric": HI_DISPLAY_NAME,
+            "value": evaluation.value if evaluation.value is not None else math.nan,
+            "value_text": format_homogeneity_details(d2_value, d50_value, d98_value, hi_value),
+            "goal": HI_GOAL,
+            "score": evaluation.score if evaluation.value is not None else math.nan,
+            "domain": "Target Dose Quality",
+            "category": "TV",
+            "oar_group": None,
+            "missing_eval": False,
+            "notes": HI_TOOLTIP,
+            "D2_Gy": d2_value,
+            "D50_Gy": d50_value,
+            "D98_Gy": d98_value,
+        })
 
     missing=[]
     for rx,targets in sorted(lower_target_rxs.items(),reverse=True):

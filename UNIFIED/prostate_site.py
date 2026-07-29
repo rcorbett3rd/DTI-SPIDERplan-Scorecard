@@ -28,6 +28,15 @@ from prostate_dicom_engine import (
     volume_at_dose,
 )
 from prostate_reporting import make_pdf
+from core.homogeneity import (
+    HI_DISPLAY_NAME,
+    HI_GOAL,
+    HI_TOOLTIP,
+    format_homogeneity_details,
+    homogeneity_index,
+    score_homogeneity_index,
+    should_score_target_homogeneity,
+)
 from prostate_scoring_engine import (
     coverage_score,
     grade,
@@ -222,6 +231,11 @@ def analyze_uploaded(
             )
             domain_scores["Target Coverage"].append(s)
 
+            d2 = dose_at_volume_cc(dvh, 0.02 * total_cc)
+            d50 = dose_at_volume_cc(dvh, 0.50 * total_cc)
+            d98 = dose_at_volume_cc(dvh, 0.98 * total_cc)
+            hi = homogeneity_index(d2, d50, d98)
+
             d003 = dose_at_volume_cc(dvh, min(0.03, total_cc))
             d003_pct = 100.0 * d003 / rx if rx > 0 else math.nan
             hs = hotspot_score(
@@ -279,6 +293,29 @@ def analyze_uploaded(
                     }
                 )
                 domain_scores["Target Dose Quality"].append(vs)
+
+                if should_score_target_homogeneity(name, rx, highest_target_rx):
+                    hi_evaluation = score_homogeneity_index(hi)
+                    rows.append(
+                        {
+                            "structure": name,
+                            "metric": HI_DISPLAY_NAME,
+                            "value": hi_evaluation.value if hi_evaluation.value is not None else math.nan,
+                            "value_text": format_homogeneity_details(d2, d50, d98, hi),
+                            "goal": HI_GOAL,
+                            "score": hi_evaluation.score if hi_evaluation.value is not None else math.nan,
+                            "domain": "Target Dose Quality",
+                            "category": "TV",
+                            "missing_eval": False,
+                            "notes": HI_TOOLTIP,
+                            "D2_Gy": d2,
+                            "D50_Gy": d50,
+                            "D98_Gy": d98,
+                        }
+                    )
+                    
+                    if hi_evaluation.value is not None:
+                        domain_scores["Target Dose Quality"].append(hi_evaluation.score)
             else:
                 expected_eval_targets.setdefault(round(float(rx), 3), []).append(name)
             continue

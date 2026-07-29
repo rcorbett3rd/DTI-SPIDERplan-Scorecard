@@ -8,6 +8,8 @@ from typing import Any, Mapping
 
 from sites.base import MetricDefinition
 
+from .homogeneity import score_homogeneity_index as _score_homogeneity_index
+
 
 @dataclass(frozen=True)
 class MetricEvaluation:
@@ -163,6 +165,17 @@ def score_target_minimum(
         f"Dmin={measured:.1f}%Rx; minimum acceptable is {minimum:.1f}%Rx.",
     )
 
+
+
+def score_homogeneity_index(value: Any) -> MetricEvaluation:
+    """Score ICRU 83 HI using the approved 0.10 / 0.15 / 0.20 ladder."""
+    evaluation = _score_homogeneity_index(value)
+    return MetricEvaluation(
+        evaluation.value,
+        evaluation.score,
+        evaluation.status,
+        evaluation.note,
+    )
 
 def evaluate_definition(
     definition: MetricDefinition,

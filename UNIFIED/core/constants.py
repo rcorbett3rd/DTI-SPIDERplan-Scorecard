@@ -1,8 +1,8 @@
 """Application-wide constants."""
 
 APP_NAME = "DTI SPIDERplan Scorecard™"
-VERSION = "1.0.0-rc.1"
-RELEASE_NAME = "Unified Prostate and Head & Neck Release Candidate"
+VERSION = "1.0.0-rc.2"
+RELEASE_NAME = "Unified Prostate and Head & Neck Release Candidate with ICRU HI"
 
 SUPPORTED_SITES = ("Prostate", "Head & Neck")
 DEFAULT_SITE = "Prostate"
