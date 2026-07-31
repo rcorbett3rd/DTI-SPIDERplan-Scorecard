@@ -217,7 +217,11 @@ def _score_target_coverage(row: pd.Series, highest_rx: float | None = None) -> t
     else:
         notes.append("V105/D0.03cc high-dose review not scored on non-eval lower-dose TV; use matching *_eval contour")
 
-    score = min(scores) if scores else 0.0
+    # Keep the Target Coverage / Dose Quality row limited to the two metrics
+    # named by the row: prescription coverage and minimum target dose.
+    # Highest-dose V105Rx and D0.03cc remain documented for review, but they
+    # must not overwrite an otherwise acceptable target-coverage score.
+    score = min(cov_score, min_score)
     return round(score, 1), "; ".join(notes)
 
 
