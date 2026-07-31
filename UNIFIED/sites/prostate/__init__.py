@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Sequence
 
 from sites.base import MetricDefinition, SiteProfile
@@ -40,7 +41,12 @@ PROFILE = SiteProfile(
 
 
 def is_eval_target(name: str) -> bool:
-    return normalize_structure_name(name).endswith(PROFILE.eval_suffix)
+    """Recognize eval targets with optional dose text before or after ``eval``."""
+    normalized = normalize_structure_name(name)
+    return (
+        is_target(name)
+        and re.search(r"eval(?=$|[^a-z]|[0-9])", normalized) is not None
+    )
 
 
 def is_target(name: str) -> bool:

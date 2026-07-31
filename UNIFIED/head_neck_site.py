@@ -73,6 +73,13 @@ def _score_status(score: float) -> str:
     return "Failed"
 
 
+def _is_eval_target_name(name: str) -> bool:
+    """Recognize eval targets regardless of separator or dose placement."""
+    low = str(name).strip().lower()
+    is_target_name = any(token in low for token in ("ptv", "ctv", "gtv"))
+    return is_target_name and re.search(r"eval(?=$|[^a-z]|[0-9])", low) is not None
+
+
 def _style_metrics(df: pd.DataFrame):
     def row_style(row: pd.Series) -> list[str]:
         status = str(row.get("Status", ""))
@@ -178,7 +185,7 @@ def analyze_uploaded(
         rx=target_rxs.get(name)
         if is_hn_target(name):
             target_assignments.append({"Target":name,"Assigned Rx (Gy)":rx,"Assignment source":"Dose parsed from target name / H&N level","Score eligible":rx is not None})
-            if 'eval' in low and rx is not None: eval_rxs.add(round(float(rx),2))
+            if _is_eval_target_name(name) and rx is not None: eval_rxs.add(round(float(rx),2))
             elif rx is not None and highest_rx is not None and not math.isclose(float(rx),float(highest_rx),abs_tol=.05):
                 lower_target_rxs.setdefault(round(float(rx),2),[]).append(name)
         else:
@@ -219,7 +226,7 @@ def analyze_uploaded(
         role=str(r.get('scoring_role',''))
         # Display the clinically relevant value in the same compact Prostate table format.
         value=math.nan; value_text='Not scored'; metric=role or category; goal=str(r.get('notes',''))
-        if is_tv and 'eval' in str(r.get('structure','')).lower():
+        if is_tv and _is_eval_target_name(str(r.get('structure', ''))):
             value=r.get('V105Rx_%',math.nan); value_text=f"{float(value):.1f}%" if pd.notna(value) else 'Not available'; metric='V105%'
         elif is_tv:
             value=r.get('V100Rx_%',math.nan); value_text=f"{float(value):.1f}%" if pd.notna(value) else 'Not available'; metric='Target Coverage / Dose Quality'
@@ -457,10 +464,19 @@ def structure_radar_figure(
             # H&N target rows use the compact metric label
             # "Target Coverage / Dose Quality" rather than a V100%-prefixed label.
             # Include every scored, non-missing target row and plot its actual V100Rx value.
+            # Plot only each target's prescription-coverage row.
+            # Exclude eval-only hotspot/HI rows so every primary target,
+            # including PTV60, contributes exactly one V100Rx coverage point.
+            metric_names = df["metric"].astype(str)
+            eval_mask = df["structure"].astype(str).map(_is_eval_target_name)
             df = df[
                 (df["category"] == "TV")
                 & (~df["missing_eval"].fillna(False).astype(bool))
-                & (~df["structure"].astype(str).str.contains("eval", case=False, na=False))
+                & (~eval_mask)
+                & (
+                    metric_names.eq("Target Coverage / Dose Quality")
+                    | metric_names.str.startswith("V100%", na=False)
+                )
                 & pd.to_numeric(df["value"], errors="coerce").notna()
             ].copy()
             grouped = (

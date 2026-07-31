@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +70,13 @@ def _score_status(score: float) -> str:
     if score >= 75:
         return "Marginal"
     return "Failed"
+
+
+def _is_eval_target_name(name: str) -> bool:
+    """Recognize eval targets regardless of separator or dose placement."""
+    low = str(name).strip().lower()
+    is_target_name = any(token in low for token in ("ptv", "ctv", "gtv"))
+    return is_target_name and re.search(r"eval(?=$|[^a-z]|[0-9])", low) is not None
 
 
 def _style_metrics(df: pd.DataFrame):
@@ -259,7 +267,7 @@ def analyze_uploaded(
             )
             domain_scores["Target Dose Quality"].append(hs)
 
-            is_eval_target = "eval" in name.lower()
+            is_eval_target = _is_eval_target_name(name)
             is_highest_level = (
                 highest_target_rx is not None
                 and math.isclose(float(rx), float(highest_target_rx), abs_tol=0.01)
@@ -630,8 +638,10 @@ def structure_radar_figure(
     for result in results:
         df = _result_metrics_df(result)
         if category == "TV":
+            eval_mask = df["structure"].astype(str).map(_is_eval_target_name)
             df = df[
                 (df["category"] == "TV")
+                & (~eval_mask)
                 & df["metric"].astype(str).str.startswith("V100%")
                 & pd.to_numeric(df["value"], errors="coerce").notna()
             ].copy()

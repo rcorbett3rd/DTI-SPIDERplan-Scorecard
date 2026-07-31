@@ -33,7 +33,14 @@ def _is_excluded_helper_structure(name: str) -> bool:
 
 
 def _is_eval_structure(name: str) -> bool:
-    return str(name).strip().lower().endswith("_eval")
+    """Return True when a target name contains the eval marker.
+
+    Recognizes separator and dose-bearing variants such as PTV_eval,
+    PTV_eval56Gy, PTV_eval (56 Gy), PTV56Gy_eval, and PTV 56 Gy eval,
+    while avoiding unrelated words such as ``evaluation``.
+    """
+    n = str(name).strip().lower()
+    return _is_target(name) and re.search(r"eval(?=$|[^a-z]|[0-9])", n) is not None
 
 
 def _is_target(name: str) -> bool:
@@ -305,7 +312,11 @@ def _highest_non_eval_ptv_rx(dvh_df: pd.DataFrame) -> float | None:
 
 
 def _eval_parent_rx(name: str) -> str:
-    return re.sub(r"_eval$", "", str(name).strip(), flags=re.IGNORECASE)
+    """Return a readable parent label for any supported eval-name variant."""
+    value = str(name).strip()
+    value = re.sub(r"(?i)eval", "", value)
+    value = re.sub(r"[_\-\s()]+", " ", value).strip()
+    return value
 
 
 def build_metric_table(dvh_df: pd.DataFrame, rx_dose_gy: float | None) -> pd.DataFrame:
